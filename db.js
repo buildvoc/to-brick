@@ -32,9 +32,18 @@ module.exports = function (databaseUrl) {
     })
   }
 
-  function executeQueries(query, rows, callback) {
-    H(rows)
-      .map(H.curry(executeQuery, query))
+  function executeObjectQuery(parameterizedQuery, object, callback) {
+    const columns = R.keys(object).join(', ')
+    const values = R.keys(object).map((key, i) => `$${i + 1}`).join(', ')
+    const params = R.values(object)
+    const query = parameterizedQuery.replace('$COLUMNS', columns).replace('$VALUES', values)
+
+    executeQuery(query, params, callback)
+  }
+
+  function executeObjectQueries(query, objects, callback) {
+    H(objects)
+      .map(H.curry(executeObjectQuery, query))
       .nfcall([])
       .series()
       .errors(callback)
@@ -44,33 +53,32 @@ module.exports = function (databaseUrl) {
   function addTasks(tasks, callback) {
     var query = `
       INSERT INTO
-        tasks (id, description)
-      VALUES ($1, $2)
+        tasks ($COLUMNS)
+      VALUES ($VALUES)
       ON CONFLICT (id) DO UPDATE SET
         description = EXCLUDED.description;`
 
-    executeQueries(query, tasks, callback)
+    executeObjectQueries(query, tasks, callback)
   }
 
   function addCollections (collections, callback) {
     const collectionsQuery = `
       INSERT INTO
-        collections (organization_id, id, title, url)
-      VALUES ($1, $2, $3, $4)
+        collections ($COLUMNS)
+      VALUES ($VALUES)
       ON CONFLICT (organization_id, id) DO UPDATE SET
         title = EXCLUDED.title,
         url = EXCLUDED.url;`
 
     const collectionsTasksQuery = `
       INSERT INTO
-        collections_tasks (organization_id, collection_id, task_id, submissions_needed)
-      VALUES ($1, $2, $3, $4)
+        collections_tasks ($COLUMNS)
+      VALUES ($VALUES)
       ON CONFLICT (organization_id, collection_id, task_id) DO UPDATE SET
         submissions_needed = EXCLUDED.submissions_needed;`
 
     const collectionRows = collections
       .map(R.omit(['tasks']))
-      .map(R.values)
 
     const collectionsTasks = R.flatten(collections
       .map((collection) => collection.tasks
@@ -81,13 +89,12 @@ module.exports = function (databaseUrl) {
           submissions_needed: collectionTask.submissionsNeeded
         }))
       ))
-      .map(R.values)
 
-    executeQueries(collectionsQuery, collectionRows, (err) => {
+    executeObjectQueries(collectionsQuery, collectionRows, (err) => {
       if (err) {
         callback(err)
       } else {
-        executeQueries(collectionsTasksQuery, collectionsTasks, callback)
+        executeObjectQueries(collectionsTasksQuery, collectionsTasks, callback)
       }
     })
   }
@@ -95,13 +102,13 @@ module.exports = function (databaseUrl) {
   function addItems (items, callback) {
     const query = `
       INSERT INTO
-        items (organization_id, id, collection_id, data)
-      VALUES ($1, $2, $3, $4)
+        items ($COLUMNS)
+      VALUES ($VALUES)
       ON CONFLICT (organization_id, id) DO UPDATE SET
         collection_id = EXCLUDED.collection_id,
         data = EXCLUDED.data;`
 
-    executeQueries(query, items.map(R.values), callback)
+    executeObjectQueries(query, items, callback)
   }
 
   return {
