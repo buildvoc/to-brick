@@ -21,19 +21,58 @@ const createPromise = (fun, ...args) => {
   })
 }
 
-module.exports.addTasks = (tasks) => {
+addTasks = (tasks) => {
   return createPromise(db.addTasks, tasks)
 }
 
 
-module.exports.addCollection = (collection) => {
+addCollection = (collection) => {
   return createPromise(db.addCollections, [collection])
 }
 
-module.exports.addCollections = (collections) => {
+addCollections = (collections) => {
   return createPromise(db.addCollections, collections)
 }
 
-module.exports.addItems = (items) => {
+addItems = (items) => {
   return createPromise(db.addItems, items)
+}
+
+addAll = (tasks, collections, items, log = false) => {
+  return new Promise((resolve, reject) => {
+    addTasks(tasks)
+      .then(() => {
+        if (log) {
+          console.log(`Done adding ${tasks.length} tasks`)
+        }
+
+        return addCollections(collections)
+      })
+      .then(() => {
+        if (log) {
+          console.log(`Done adding ${collections.length} collections`)
+        }
+        return addItems(items)
+      })
+      .then(() => {
+        if (log) {
+          console.log(`Done adding ${items.length} items`)
+        }
+        resolve()
+      })
+      .catch((err) => {
+        if (log) {
+          console.error(`Error: ${err.message}`)
+        }
+        reject(err)
+      })
+  })
+}
+
+module.exports = {
+  addTasks,
+  addCollection,
+  addCollections,
+  addItems,
+  addAll
 }
