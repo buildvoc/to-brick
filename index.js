@@ -42,6 +42,7 @@ addAll = (tasks, collections, items, logging = false) => {
   const log = (items, singular, plural) => {
     console.log(`Done adding ${items.length} ${items.length !== 1 ? plural : singular}`)
   }
+
   return new Promise((resolve, reject) => {
     addTasks(tasks)
       .then(() => {
