@@ -32,49 +32,82 @@ module.exports = function (databaseUrl) {
     })
   }
 
-  function executeInsertQuery (table, row, callback) {
-    var query = `
-      INSERT INTO ${table} (${R.keys(row).join(', ')})
-      VALUES (${R.keys(row).map((key, i) => `$${i + 1}`).join(', ')});
-    `
-    executeQuery(query, R.values(row), callback)
+  function executeQueries(query, rows, callback) {
+    H(rows)
+      .map(H.curry(executeQuery, query))
+      .nfcall([])
+      .series()
+      .errors(callback)
+      .done(callback)
   }
 
-  function replaceRows(table, provider, collectionId, rows, callback) {
-    if (!rows.length) {
-      callback('No rows specified')
-    }
+  function addTasks(tasks, callback) {
+    var query = `
+      INSERT INTO
+        tasks (id, description)
+      VALUES ($1, $2)
+      ON CONFLICT (id) DO UPDATE SET
+        description = EXCLUDED.description;`
 
-    const collectionIdColumn = (table === 'collections') ? 'id' : 'collection_id'
+    executeQueries(query, tasks, callback)
+  }
 
-    const query = `
-      DELETE FROM ${table}
-      WHERE provider = $1 AND
-      ${collectionIdColumn} = $2;`
+  function addCollections (collections, callback) {
+    const collectionsQuery = `
+      INSERT INTO
+        collections (organization_id, id, title, url)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (organization_id, id) DO UPDATE SET
+        title = EXCLUDED.title,
+        url = EXCLUDED.url;`
 
-    executeQuery(query, [provider, collectionId], (err) => {
+    const collectionsTasksQuery = `
+      INSERT INTO
+        collections_tasks (organization_id, collection_id, task_id, submissions_needed)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (organization_id, collection_id, task_id) DO UPDATE SET
+        submissions_needed = EXCLUDED.submissions_needed;`
+
+    const collectionRows = collections
+      .map(R.omit(['tasks']))
+      .map(R.values)
+
+    const collectionsTasks = R.flatten(collections
+      .map((collection) => collection.tasks
+        .map((collectionTask) => ({
+          organization_id: collection.organization_id,
+          collection_id: collection.id,
+          task_id: collectionTask.task,
+          submissions_needed: collectionTask.submissionsNeeded
+        }))
+      ))
+      .map(R.values)
+
+    executeQueries(collectionsQuery, collectionRows, (err) => {
       if (err) {
         callback(err)
       } else {
-        H(rows)
-          .map(H.curry(executeInsertQuery, table))
-          .nfcall([])
-          .series()
-          .errors((err, push) => {
-            if (err.code === '23505') {
-              push(null, {})
-            } else {
-              console.log(err)
-              push(err)
-            }
-          })
-          .done(callback)
+        executeQueries(collectionsTasksQuery, collectionsTasks, callback)
       }
     })
   }
 
+  function addItems (items, callback) {
+    const query = `
+      INSERT INTO
+        items (organization_id, id, collection_id, data)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (organization_id, id) DO UPDATE SET
+        collection_id = EXCLUDED.collection_id,
+        data = EXCLUDED.data;`
+
+    executeQueries(query, items.map(R.values), callback)
+  }
+
   return {
     executeQuery,
-    replaceRows
+    addTasks,
+    addCollections,
+    addItems
   }
 }

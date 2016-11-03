@@ -4,29 +4,36 @@ var argv = require('minimist')(process.argv.slice(2), {
   }
 })
 
-const DATABASE_URL = argv.d || 'postgres://postgres:postgres@localhost:5432/surveyor'
+const DATABASE_URL = argv.d || 'postgres://postgres:postgres@localhost:5432/brick-by-brick'
 const db = require('./db')(DATABASE_URL)
 
-module.exports.addCollection = (collection, callback) => {
-  db.replaceRows('collections', collection.provider, collection.id, [collection], callback)
+const createPromise = (fun, ...args) => {
+  return new Promise((resolve, reject) => {
+    const callback = (err) => {
+      if (!err) {
+        resolve()
+      } else {
+        reject(err)
+      }
+    }
+
+    fun.apply(this, [...args, callback])
+  })
 }
 
-module.exports.addCollections = (collections, callback) => {
-  if (collections && collections.length) {
-    const provider = collections[0].provider
-    const collectionId = collections[0].id
-    db.replaceRows('collections', provider, collectionId, collections, callback)
-  } else {
-    callback()
-  }
+module.exports.addTasks = (tasks) => {
+  return createPromise(db.addTasks, tasks)
 }
 
-module.exports.addItems = (items, callback) => {
-  if (items && items.length) {
-    const provider = items[0].provider
-    const collectionId = items[0].collectionId
-    db.replaceRows('items', provider, collectionId, items, callback)
-  } else {
-    callback()
-  }
+
+module.exports.addCollection = (collection) => {
+  return createPromise(db.addCollections, [collection])
+}
+
+module.exports.addCollections = (collections) => {
+  return createPromise(db.addCollections, collections)
+}
+
+module.exports.addItems = (items) => {
+  return createPromise(db.addItems, items)
 }
