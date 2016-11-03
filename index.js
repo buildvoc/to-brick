@@ -38,30 +38,33 @@ addItems = (items) => {
   return createPromise(db.addItems, items)
 }
 
-addAll = (tasks, collections, items, log = false) => {
+addAll = (tasks, collections, items, logging = false) => {
+  const log = (items, singular, plural) => {
+    console.log(`Done adding ${items.length} ${items.length !== 1 ? plural : singular}`)
+  }
   return new Promise((resolve, reject) => {
     addTasks(tasks)
       .then(() => {
-        if (log) {
-          console.log(`Done adding ${tasks.length} ${tasks.length !== 1 ? 'tasks' : 'task'}`)
+        if (logging) {
+          log(tasks, 'task', 'tasks')
         }
 
         return addCollections(collections)
       })
       .then(() => {
-        if (log) {
-          console.log(`Done adding ${collections.length} ${collections.length !== 1 ? 'collections' : 'collection'}`)
+        if (logging) {
+          log(collections, 'collection', 'collections')
         }
         return addItems(items)
       })
       .then(() => {
-        if (log) {
-          console.log(`Done adding ${items.length} ${items.length !== 1 ? 'items' : 'item'}`)
+        if (logging) {
+          log(items, 'item', 'items')
         }
         resolve()
       })
       .catch((err) => {
-        if (log) {
+        if (logging) {
           console.error(`Error: ${err.message}`)
         }
         reject(err)
