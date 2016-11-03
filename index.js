@@ -43,20 +43,20 @@ addAll = (tasks, collections, items, log = false) => {
     addTasks(tasks)
       .then(() => {
         if (log) {
-          console.log(`Done adding ${tasks.length} tasks`)
+          console.log(`Done adding ${tasks.length} ${tasks.length !== 1 ? 'tasks' : 'task'}`)
         }
 
         return addCollections(collections)
       })
       .then(() => {
         if (log) {
-          console.log(`Done adding ${collections.length} collections`)
+          console.log(`Done adding ${collections.length} ${collections.length !== 1 ? 'collections' : 'collection'}`)
         }
         return addItems(items)
       })
       .then(() => {
         if (log) {
-          console.log(`Done adding ${items.length} items`)
+          console.log(`Done adding ${items.length} ${items.length !== 1 ? 'items' : 'item'}`)
         }
         resolve()
       })

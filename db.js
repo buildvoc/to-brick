@@ -85,7 +85,7 @@ module.exports = function (databaseUrl) {
         .map((collectionTask) => ({
           organization_id: collection.organization_id,
           collection_id: collection.id,
-          task_id: collectionTask.task,
+          task_id: collectionTask.id,
           submissions_needed: collectionTask.submissionsNeeded
         }))
       ))
