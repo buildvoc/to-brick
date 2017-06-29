@@ -1,13 +1,16 @@
 {
   "name": "to-brick",
-  "version": "0.6.0",
-  "description": "",
+  "version": "0.7.0",
+  "description": "Writes data to brick-by-brick database",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Bert Spaan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nypl-spacetime/to-brick.git"
+  },
+  "license": "MIT",
   "dependencies": {
     "highland": "^2.10.0",
     "minimist": "^1.2.0",

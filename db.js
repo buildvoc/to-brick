@@ -1,6 +1,6 @@
-var H = require('highland')
-var R = require('ramda')
-var pg = require('pg')
+const H = require('highland')
+const R = require('ramda')
+const pg = require('pg')
 
 module.exports = function (databaseUrl) {
   function executeQuery (query, params, callback) {
@@ -32,7 +32,7 @@ module.exports = function (databaseUrl) {
     })
   }
 
-  function executeObjectQuery(parameterizedQuery, object, callback) {
+  function executeObjectQuery (parameterizedQuery, object, callback) {
     const columns = R.keys(object).join(', ')
     const values = R.keys(object).map((key, i) => `$${i + 1}`).join(', ')
     const params = R.values(object)
@@ -41,7 +41,7 @@ module.exports = function (databaseUrl) {
     executeQuery(query, params, callback)
   }
 
-  function executeObjectQueries(query, objects, callback) {
+  function executeObjectQueries (query, objects, callback) {
     H(objects)
       .map(H.curry(executeObjectQuery, query))
       .nfcall([])
@@ -50,7 +50,7 @@ module.exports = function (databaseUrl) {
       .done(callback)
   }
 
-  function addTasks(tasks, callback) {
+  function addTasks (tasks, callback) {
     var query = `
       INSERT INTO
         tasks ($COLUMNS)

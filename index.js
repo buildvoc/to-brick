@@ -1,4 +1,4 @@
-var argv = require('minimist')(process.argv.slice(2), {
+const argv = require('minimist')(process.argv.slice(2), {
   alias: {
     d: 'database'
   }
@@ -7,7 +7,7 @@ var argv = require('minimist')(process.argv.slice(2), {
 const DATABASE_URL = argv.d || 'postgres://postgres:postgres@localhost:5432/brick-by-brick'
 const db = require('./db')(DATABASE_URL)
 
-const createPromise = (fun, ...args) => {
+function createPromise (fun, ...args) {
   return new Promise((resolve, reject) => {
     const callback = (err) => {
       if (!err) {
@@ -21,24 +21,23 @@ const createPromise = (fun, ...args) => {
   })
 }
 
-addTasks = (tasks) => {
+function addTasks (tasks) {
   return createPromise(db.addTasks, tasks)
 }
 
-
-addCollection = (collection) => {
+function addCollection (collection) {
   return createPromise(db.addCollections, [collection])
 }
 
-addCollections = (collections) => {
+function addCollections (collections) {
   return createPromise(db.addCollections, collections)
 }
 
-addItems = (items) => {
+function addItems (items) {
   return createPromise(db.addItems, items)
 }
 
-addAll = (tasks, collections, items, logging = false) => {
+function addAll (tasks, collections, items, logging = false) {
   const log = (items, singular, plural) => {
     console.log(`Done adding ${items.length} ${items.length !== 1 ? plural : singular}`)
   }
