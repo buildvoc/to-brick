@@ -67,6 +67,7 @@ module.exports = function (databaseUrl) {
         collections ($COLUMNS)
       VALUES ($VALUES)
       ON CONFLICT (organization_id, id) DO UPDATE SET
+        data = EXCLUDED.data,
         title = EXCLUDED.title,
         url = EXCLUDED.url;`
 
